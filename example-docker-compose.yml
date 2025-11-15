@@ -1,0 +1,41 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    command: ["npm", "run", "start:dev"]
+    container_name: WhatsappClone
+    ports:
+      - "3002:3002"
+    depends_on:
+      - rabbitmq
+      - mongo
+      - redis
+    env_file:
+      - ./.env
+    volumes: 
+      - .:/app
+      - /app/node_modules
+
+  mongo:
+    image: mongo
+    container_name: card-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis
+    container_name: card-redis
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: card-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  mongo-data:
