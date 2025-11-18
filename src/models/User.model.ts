@@ -11,7 +11,8 @@ const userSchema = new mongoose.Schema<UserType>({
     avatar: {type: String, required: false},
     conversations: [userConversations],
     online: {type: Boolean, required: false},
-    lastSeen: {type: String, required: false}
+    lastSeen: {type: String, required: false},
+    lastLoginToken: {type: String, required: false}
 });
 
 

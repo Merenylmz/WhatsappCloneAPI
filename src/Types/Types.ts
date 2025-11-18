@@ -9,7 +9,8 @@ type UserType = {
     avatar?: String
     conversations: any
     online?: Boolean
-    lastSeen?: String
+    lastSeen?: String,
+    lastLoginToken?: String
 };
 
 type MessageType = {

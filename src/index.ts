@@ -48,21 +48,24 @@ io.on("connection", async(socket: AuthenticatedSocket)=>{
         }
         user.online = true;
         await user.save();
-        const userConversations = await Conversation.find({participants: socket.userId});
 
-        userConversations.forEach((convo)=>{
+        const userConversations = await Conversation.find({ 
+            "participants.user": socket.userId 
+        });
+
+        userConversations.forEach((convo) => {
             socket.join(convo._id.toString());
-            console.log("Convo", convo);
+            console.log(`Socket ${convo._id} odasına (Sohbet Odası) girdi.`);
         });
 
         socket.on("sendMessage", async({conversationId, content})=>{
             console.log("Starting Sending a Message");
+
             const senderId = socket.userId;
 
             if (!senderId) {
                 return false;
             }
-
             const newMessage = new Message({
                 content: content,
                 sender: senderId,
@@ -70,17 +73,19 @@ io.on("connection", async(socket: AuthenticatedSocket)=>{
                 contentType: "Text"
             });
             await newMessage.save();
+            console.log(senderId, content);
 
             const populatedMessage = await newMessage.populate('sender', 'username avatar');
+            
             await Conversation.findByIdAndUpdate(conversationId, {
                 lastMessage: newMessage._id
             });
+            
             io.to(conversationId).emit("newMessage", populatedMessage);
-
         });
     } catch (error) {
         console.log(error);
-        return error;
+        return `Errorrrrrrr: ${error}`;
     }
     socket.on("joinRoom", (roomId: string) => {
       socket.join(roomId);

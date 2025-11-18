@@ -8,11 +8,11 @@ export const register = async(req: Request, res: Response) =>{
     try {
         const user = await User.findOne({email: req.body.email});  
         if (user) {
-            return res.send({msg: "User is not found", status: false});
+            return res.send({msg: "User is already exists", status: false});
         }      
         const hash = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, hash);
-        const newUser = new User({email: req.body.email, password: hashedPassword, username: req.body.name});
+        const newUser = new User({email: req.body.email, password: hashedPassword, username: req.body.username});
         await newUser.save();
 
 
@@ -26,7 +26,7 @@ export const login = async(req: Request, res: Response) =>{
     try {
         const user = await User.findOne({email: req.body.email});  
         if (!user) {
-            return res.send({msg: "User is already exists", status: false});
+            return res.send({msg: "User is not found", status: false});
         }   
         const passwordControl = await bcrypt.compare(req.body.password, (user.password as string));
         if (!passwordControl) {
@@ -35,6 +35,8 @@ export const login = async(req: Request, res: Response) =>{
 
         const token = jwt.sign({userId: user._id}, process.env.PRIVATE_KEY!);
         await redis.set(`loginlist:${token}`, user._id.toString(), "EX", 60*20);
+        user.lastLoginToken = token;
+        await user.save();
         
         return res.send({token, status: true});
     } catch (error) {
