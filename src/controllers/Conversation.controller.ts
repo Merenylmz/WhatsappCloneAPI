@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { json, Request, Response } from "express";
 import Conversation from "../models/Conversation.model";
 import { ConversationType } from "../Types/Types";
 import { AuthRequest } from "../middleware/tokenControl";
 import User from "../models/User.model";
-
+import redis from "../libs/redis/redisConf";
 
 const getConversationById = async(req: AuthRequest, res: Response) =>{
     try {
@@ -11,11 +11,11 @@ const getConversationById = async(req: AuthRequest, res: Response) =>{
         if (!conversation) {
             return res.send({status: false, msg: "Conversation is not found"});
         }
-        
         if (conversation.participants.includes(req.user._id)) {
             return res.send({status: false, msg: "Forbidden Enter"});
         } 
 
+        await redis.setex(`conversation:${req.user._id}`, 60*60*36, JSON.stringify(conversation));
         return res.send({status: true, conversation});
     } catch (error) {
         console.log("Error", error);

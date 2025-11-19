@@ -1,4 +1,3 @@
-import { NextFunction } from "express";
 import { AuthenticatedSocket } from "../Types/Types";
 import jwt from "jsonwebtoken";
 
@@ -8,7 +7,6 @@ const tokenControl = (socket: AuthenticatedSocket, next: (err?: Error) => void) 
     //     return next(new Error("Autheticated Error: Token is not found"));
     // }    
     console.log(token);
-
     try {
         const payload = jwt.verify(token, process.env.PRIVATE_KEY!) as {userId: any};
         socket.userId = payload.userId;

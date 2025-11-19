@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
-import express, { NextFunction, Request, Response } from "express";
-import mongoose, { now } from "mongoose";
+import express, { Request, Response } from "express";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 import connectionRabbit, { rabbitMQConnectionStatus } from "./libs/rabbitmq/rabbitMQConf";
 import userRoutes from "./routes/User.routes";
@@ -60,7 +60,6 @@ io.on("connection", async(socket: AuthenticatedSocket)=>{
 
         socket.on("sendMessage", async({conversationId, content})=>{
             console.log("Starting Sending a Message");
-
             const senderId = socket.userId;
 
             if (!senderId) {
@@ -121,7 +120,6 @@ io.on("connection", async(socket: AuthenticatedSocket)=>{
         await user.save();
     });
 });
-
 
 app.get("/", (req, res)=>{
     res.send("Hello");
