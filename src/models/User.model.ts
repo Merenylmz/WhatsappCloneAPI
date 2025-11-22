@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema<UserType>({
     conversations: [userConversations],
     online: {type: Boolean, required: false},
     lastSeen: {type: String, required: false},
-    lastLoginToken: {type: String, required: false}
+    lastLoginToken: {type: String, required: false},
+    QRCodeURI: {type: String, required: false},
+    QRCodeToken: {type:String, required: false},
+    forgotPasswordToken: {type: String, required: false}
 });
 
 

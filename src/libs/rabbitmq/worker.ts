@@ -1,4 +1,5 @@
 // import { sendMail } from "../nodemailer/configureNodeMailer";
+import { runMailThread } from "../threads/threadRunner";
 import { consumeQueue, rabbitMQConnectionStatus } from "./rabbitMQConf";
 // import workerpool from "workerpool";
 
@@ -13,7 +14,7 @@ const processQueueOnce = async() =>{
             case "sendMail":
                 if (msg.payload) {
                     // await sendMail(msg.payload);
-                    // await runMailThread(msg.payload);
+                    await runMailThread(msg.payload);
                 } else {
                     return console.log("If Your wanna send email, please enter payload information.");
                 }

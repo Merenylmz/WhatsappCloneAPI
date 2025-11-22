@@ -15,7 +15,7 @@ const getConversationById = async(req: AuthRequest, res: Response) =>{
             return res.send({status: false, msg: "Forbidden Enter"});
         } 
 
-        await redis.setex(`conversation:${req.user._id}`, 60*60*36, JSON.stringify(conversation));
+        await redis.setex(`conversation:${req.params.id}`, 60*60*36, JSON.stringify(conversation));
         return res.send({status: true, conversation});
     } catch (error) {
         console.log("Error", error);

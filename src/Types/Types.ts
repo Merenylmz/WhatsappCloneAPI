@@ -10,7 +10,10 @@ type UserType = {
     conversations: any
     online?: Boolean
     lastSeen?: String,
-    lastLoginToken?: String
+    lastLoginToken?: String,
+    QRCodeURI?: String,
+    QRCodeToken?: String,
+    forgotPasswordToken?: String 
 };
 
 type MessageType = {

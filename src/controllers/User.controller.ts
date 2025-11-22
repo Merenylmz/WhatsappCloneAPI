@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import User from "../models/User.model";
 import jwt from "jsonwebtoken";
 import redis from "../libs/redis/redisConf";
+import { sendToQueue } from "../libs/rabbitmq/rabbitMQConf";
 
 export const register = async(req: Request, res: Response) =>{
     try {
@@ -44,3 +45,34 @@ export const login = async(req: Request, res: Response) =>{
         return false;
     }
 };
+
+export const forgotPassword = async(req: Request, res: Response) =>{
+    try {
+        const user = await User.findOne({email: req.body.email});
+        if (!user) {
+            return res.send({status: false, msg: "User is not found"});
+        }
+        const token = await jwt.sign({userId: user._id}, process.env.PRIVATE_KEY!);
+        user.forgotPasswordToken = token;
+        await user.save();
+        sendToQueue({
+            type: "sendMail",
+            payload: {
+                to: req.body.email,
+                subject: "Forgot Password Mail",
+                body: `If you wanna change your password, You can press the link <br /> <a href="http://localhost:3002/newpassword?token=${token}"></a>`
+            }
+        });
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+};
+
+// export const QRCodeLogin = () =>{
+//     try {
+        
+//     } catch (error) {
+        
+//     }
+// };

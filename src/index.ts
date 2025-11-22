@@ -6,7 +6,7 @@ import connectionRabbit, { rabbitMQConnectionStatus } from "./libs/rabbitmq/rabb
 import userRoutes from "./routes/User.routes";
 import conversationRoutes from "./routes/Conversation.routes";
 import cors from "cors";
-import { redisStatus } from "./libs/redis/redisConf";
+import redis, { redisStatus } from "./libs/redis/redisConf";
 import {createServer} from "node:http";
 import {Server} from "socket.io";
 import { AuthenticatedSocket } from "./Types/Types";
@@ -26,6 +26,8 @@ app.use(express.json());
 app.use(cors({
     origin: "*"
 }));
+
+app.use("/public", express.static("public"));
 
 
 app.get("/health", (req: Request, res: Response)=>{
@@ -76,11 +78,12 @@ io.on("connection", async(socket: AuthenticatedSocket)=>{
 
             const populatedMessage = await newMessage.populate('sender', 'username avatar');
             
-            await Conversation.findByIdAndUpdate(conversationId, {
+            const conversation = await Conversation.findByIdAndUpdate(conversationId, {
                 lastMessage: newMessage._id
             });
             
             io.to(conversationId).emit("newMessage", populatedMessage);
+            await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
         });
     } catch (error) {
         console.log(error);
