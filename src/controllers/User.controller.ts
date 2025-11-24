@@ -60,19 +60,33 @@ export const forgotPassword = async(req: Request, res: Response) =>{
             payload: {
                 to: req.body.email,
                 subject: "Forgot Password Mail",
-                body: `If you wanna change your password, You can press the link <br /> <a href="http://localhost:3002/newpassword?token=${token}"></a>`
+                body: `<p>If you wanna change your password, You can press the link</p> <br /> <a href="http://localhost:3002/users/newpassword?token=${token}"></a>`
             }
         });
+
+        return res.send({status: true, msg: "Mail Sended"});
     } catch (error) {
         console.log(error);
         return false;
     }
 };
 
-// export const QRCodeLogin = () =>{
-//     try {
-        
-//     } catch (error) {
-        
-//     }
-// };
+export const newPassword = async(req: Request, res: Response) =>{
+    try {
+        const user = await User.findOne({forgotPasswordToken: req.query.token});
+        if (!user) {
+            return res.send({status: false, msg: "User is not found"});
+        }
+
+        const hash = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password, hash);
+        user.password = hashedPassword;
+        user.forgotPasswordToken = "";
+        await user.save();
+
+        return res.send({status: true, msg: "Password Changed"});
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+};

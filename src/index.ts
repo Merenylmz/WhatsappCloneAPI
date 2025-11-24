@@ -1,4 +1,3 @@
-import jwt from 'jsonwebtoken';
 import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
@@ -6,14 +5,12 @@ import connectionRabbit, { rabbitMQConnectionStatus } from "./libs/rabbitmq/rabb
 import userRoutes from "./routes/User.routes";
 import conversationRoutes from "./routes/Conversation.routes";
 import cors from "cors";
-import redis, { redisStatus } from "./libs/redis/redisConf";
+import { redisStatus } from "./libs/redis/redisConf";
 import {createServer} from "node:http";
 import {Server} from "socket.io";
-import { AuthenticatedSocket } from "./Types/Types";
 import tokenControl from './middleware/socketIOTokenControl';
-import Conversation from './models/Conversation.model';
-import Message from './models/Message.model';
-import User from './models/User.model';
+import initializeSocketIO from './socketio/socketioCodes';
+import schedules from './libs/schedules/nodeCronSchedule';
 
 const app = express();
 const server = createServer(app);
@@ -27,108 +24,24 @@ app.use(cors({
     origin: "*"
 }));
 
+
 app.use("/public", express.static("public"));
 
 
 app.get("/health", (req: Request, res: Response)=>{
-    res.send({
-        systemStatus: true,
-        databaseStatus: mongoose.STATES.connected == 1 ? true : false,
-        redisStatus,
-        rabbitMQStatus: rabbitMQConnectionStatus,
-    });
+    res.send({systemStatus: true, databaseStatus: mongoose.STATES.connected == 1 ? true : false, redisStatus, rabbitMQStatus: rabbitMQConnectionStatus, });
 });
-
-io.use(tokenControl);
-
-io.on("connection", async(socket: AuthenticatedSocket)=>{
-    console.log(`Kullanıcı Bağlandı: ${socket.id} USERID: ${socket.userId}`);
-    try {
-        const user = await User.findOne({_id: socket.userId});
-        if (!user) {
-            return {};
-        }
-        user.online = true;
-        await user.save();
-
-        const userConversations = await Conversation.find({ 
-            "participants.user": socket.userId 
-        });
-
-        userConversations.forEach((convo) => {
-            socket.join(convo._id.toString());
-            console.log(`Socket ${convo._id} odasına (Sohbet Odası) girdi.`);
-        });
-
-        socket.on("sendMessage", async({conversationId, content})=>{
-            console.log("Starting Sending a Message");
-            const senderId = socket.userId;
-
-            if (!senderId) {
-                return false;
-            }
-            const newMessage = new Message({
-                content: content,
-                sender: senderId,
-                conversation: conversationId,
-                contentType: "Text"
-            });
-            await newMessage.save();
-            console.log(senderId, content);
-
-            const populatedMessage = await newMessage.populate('sender', 'username avatar');
-            
-            const conversation = await Conversation.findByIdAndUpdate(conversationId, {
-                lastMessage: newMessage._id
-            });
-            
-            io.to(conversationId).emit("newMessage", populatedMessage);
-            await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
-        });
-    } catch (error) {
-        console.log(error);
-        return `Errorrrrrrr: ${error}`;
-    }
-    socket.on("joinRoom", (roomId: string) => {
-      socket.join(roomId);
-      console.log(
-        `User ${socket.userId} manuel olarak ${roomId} odasına katıldı.`
-      );
-    });
-    socket.on("typing", (data) => {
-      socket
-        .to(data.conversationId)
-        .emit("userTyping", { userId: socket.userId });
-    });
-
-    socket.on("stopTyping", (data) => {
-      socket
-        .to(data.conversationId)
-        .emit("userStopTyping", { userId: socket.userId });
-    });
-
-    socket.on("disconnect", async() => {
-      console.log(
-        `❌ Kullanıcı ayrıldı: ${socket.id} (User ID: ${socket.userId})`
-      );
-        //last seen güncelle
-        // await Conversation.findOne({_id:});
-        const user = await User.findOne({_id: socket.userId});
-        if (!user) {
-            return {};
-        }
-        const now = new Date().toISOString();
-        user.lastSeen = now;
-        user.online = false;
-        await user.save();
-    });
-});
-
-app.get("/", (req, res)=>{
-    res.send("Hello");
-});
+app.get("/", (req, res)=>{res.send("Hello");});
 app.use("/users", userRoutes);
 app.use("/conversations", conversationRoutes); 
+
+
+io.use(tokenControl);
+initializeSocketIO(io);
+
+
+schedules();
+
 
 server.listen(process.env.PORT!, ()=>{
     console.log("✅ Listening a PORT");

@@ -11,12 +11,12 @@ parentPort?.on("message", async(msg)=>{
                 pass: process.env.EMAIL_PASS
             }
         });
-
+        
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: msg.to,
             subject: msg.subject,
-            text: msg.body
+            html: msg.body
         };
 
         await transporter.sendMail(mailOptions);
