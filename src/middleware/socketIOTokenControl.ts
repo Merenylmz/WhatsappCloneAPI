@@ -1,15 +1,12 @@
 import { AuthenticatedSocket } from "../Types/Types";
-import jwt from "jsonwebtoken";
+import tokenControlFunction from "./commonControl";
 
-const tokenControl = (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
-    const token = socket.handshake.query.token as string;
-    // if (!token) {
-    //     return next(new Error("Autheticated Error: Token is not found"));
-    // }    
-    console.log(token);
+const tokenControl = async(socket: AuthenticatedSocket, next: (err?: Error) => void) => {
     try {
-        const payload = jwt.verify(token, process.env.PRIVATE_KEY!) as {userId: any};
-        socket.userId = payload.userId;
+        const token = socket.handshake.query.token as string;
+        const {user} = await tokenControlFunction(token) as {user: any}; 
+
+        socket.userId = user._id;
         next();
     } catch (error) {
         return next(new Error('Authentication error: Token is not invalid'));
