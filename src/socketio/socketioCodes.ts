@@ -53,6 +53,7 @@ const initializeSocketIO = (io: Server) =>{
             
             io.to(conversationId).emit("newMessage", populatedMessage);
             await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
+            await redis.del(`messagesConversationId:${conversationId}`);
         });
     } catch (error) {
         console.log(error);

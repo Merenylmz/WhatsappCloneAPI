@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectionRabbit, { rabbitMQConnectionStatus } from "./libs/rabbitmq/rabbitMQConf";
 import userRoutes from "./routes/User.routes";
 import conversationRoutes from "./routes/Conversation.routes";
+import messageRoutes from "./routes/Messages.routes"
 import cors from "cors";
 import { redisStatus } from "./libs/redis/redisConf";
 import {createServer} from "node:http";
@@ -34,6 +35,7 @@ app.get("/health", (req: Request, res: Response)=>{
 app.get("/", (req, res)=>{res.send("Hello");});
 app.use("/users", userRoutes);
 app.use("/conversations", conversationRoutes); 
+app.use("/messages", messageRoutes);
 
 
 io.use(tokenControl);
