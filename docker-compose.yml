@@ -29,6 +29,13 @@ services:
     container_name: card-redis
     ports:
       - "6379:6379"
+  redisinsight:
+      image: redis/redisinsight:latest
+      container_name: redisinsight-container
+      ports:
+        - "5540:5540"
+      depends_on:
+        - redis
 
   rabbitmq:
     image: rabbitmq:3-management

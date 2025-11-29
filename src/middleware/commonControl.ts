@@ -12,14 +12,15 @@ const tokenControlFunction = async(token: any)=>{
     if (!user) {
         return {status: false, msg: "User is not found"};
     }
-    const redisToken = await redis.get(`loginlist:${decodedToken.userId.toString()}`); 
+    const cachedData = await redis.hgetall(`loginlist:${decodedToken.userId.toString()}`); 
     
     
     if (token != user.lastLoginToken) {
         return {status: false, msg: "Token is not valid"};
     }
+    
 
-    if (user.lastLoginToken != redisToken) {
+    if (user.lastLoginToken != cachedData.token.toString()) {
         return {status: false, msg: "Token is Expired"};
     }
 

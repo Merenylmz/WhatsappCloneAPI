@@ -8,7 +8,7 @@ import redis from "../libs/redis/redisConf";
 
 const getConversations = async(req: AuthRequest, res: Response) =>{
     try {
-        const user = await User.findOne({lastLoginToken: req.params.token});
+        const user = await User.findOne({lastLoginToken: req.query.token});
         if (!user) {
             return res.send({status: false, msg: "User is not found"});
         }
@@ -16,12 +16,28 @@ const getConversations = async(req: AuthRequest, res: Response) =>{
         let conversations = [] as any[];
 
         // await redis.del(`userId:${user._id}_conversations`);
-        const cachedData = await redis.get(`userId:${user._id}_conversations`) as string;
-        if (!cachedData) {
+        const cachedData = await redis.hgetall(`userId:${user._id}_conversations`);
+        if (!cachedData || Object.keys(cachedData).length === 0) {
             conversations = await Conversation.find({"participants.user": user._id}).populate("lastMessage").populate("participants.user");
-            await redis.setex(`userId:${user._id}_conversations`, 3600, JSON.stringify(conversations));
+            // await redis.setex(`userId:${user._id}_conversations`, 3600, JSON.stringify(conversations));
+            if (conversations.length > 0) {
+                const hashPayload: Record<string, string> = {};
+                
+                conversations.forEach((conv) => {
+                    hashPayload[conv._id.toString()] = JSON.stringify(conv);
+                });
+
+                await redis.hset(`userId:${user._id}_conversations`, hashPayload);
+                await redis.expire(`userId:${user._id}_conversations`, 3600);
+            }
         } else {
-            conversations = JSON.parse(cachedData);
+            conversations = Object.values(cachedData).map((item) => JSON.parse(item));
+
+            // conversations.sort((a: any, b: any) => {
+            //     const dateA = new Date(a.lastMessage?.createdAt || a.updatedAt || 0).getTime();
+            //     const dateB = new Date(b.lastMessage?.createdAt || b.updatedAt || 0).getTime();
+            //     return dateB - dateA; 
+            // });
         }
         return res.send({status: true, conversations});
     } catch (error) {

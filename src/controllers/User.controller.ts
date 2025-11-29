@@ -35,7 +35,9 @@ export const login = async(req: Request, res: Response) =>{
         }
 
         const token = jwt.sign({userId: user._id}, process.env.PRIVATE_KEY!);
-        await redis.set(`loginlist:${user._id.toString()}`, token, "EX", 60*20);
+        // await redis.set(`loginlist:${user._id.toString()}`, token, "EX", 60*20);
+        await redis.hset(`loginlist:${user._id.toString()}`, {token: token});
+        await redis.expire(`loginlist:${user._id.toString()}`, 1200);
         user.lastLoginToken = token;
         await user.save();
         

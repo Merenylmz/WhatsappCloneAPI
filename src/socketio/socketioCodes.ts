@@ -30,7 +30,6 @@ const initializeSocketIO = (io: Server) =>{
         });
 
         socket.on("sendMessage", async({conversationId, content})=>{
-            console.log("Starting Sending a Message");
             const senderId = socket.userId;
 
             if (!senderId) {
@@ -43,7 +42,6 @@ const initializeSocketIO = (io: Server) =>{
                 contentType: "Text"
             });
             await newMessage.save();
-            console.log(senderId, content);
 
             const populatedMessage = await newMessage.populate('sender', 'username avatar');
             
@@ -51,9 +49,17 @@ const initializeSocketIO = (io: Server) =>{
                 lastMessage: newMessage._id
             });
             
+            
             io.to(conversationId).emit("newMessage", populatedMessage);
-            await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
-            await redis.del(`messagesConversationId:${conversationId}`);
+            await redis.hset(`conversation:${conversationId}`, {conversation: conversation});
+            await redis.expire(`conversation:${conversationId}`, 60*60*36);
+            // await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
+            // await redis.get()
+            // await redis.del(`messagesConversationId:${conversationId}`);
+            const previousMessages = await redis.hgetall(`messagesConversationId:${conversationId}`) as any;
+
+            await redis.hset(`messagesConversationId:${conversationId}`, {...previousMessages.messages, populatedMessage});
+            // await redis.
         });
     } catch (error) {
         console.log(error);
@@ -65,10 +71,15 @@ const initializeSocketIO = (io: Server) =>{
         `User ${socket.userId} manuel olarak ${roomId} odasına katıldı.`
       );
     });
-    socket.on("typing", (data) => {
+    socket.on("typing", async(data) => {
       socket
         .to(data.conversationId)
         .emit("userTyping", { userId: socket.userId });
+
+
+        await Conversation.findOneAndUpdate({_id: data.conversationId}, {
+            "lastMessage.readBy": true
+        });
     });
 
     socket.on("stopTyping", (data) => {
