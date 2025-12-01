@@ -41,7 +41,7 @@ export const login = async(req: Request, res: Response) =>{
         user.lastLoginToken = token;
         await user.save();
         
-        return res.send({token, status: true});
+        return res.send({token, status: true, user: {_id: user._id, name: user.username, email: user.email}});
     } catch (error) {
         console.log(error);
         return false;

@@ -5,11 +5,7 @@ import Message from "../models/Message.model";
 import User from "../models/User.model";
 import { AuthenticatedSocket } from "../Types/Types";
 
-
-
-
 const initializeSocketIO = (io: Server) =>{
-
     io.on("connection", async(socket: AuthenticatedSocket)=>{
     console.log(`Kullanıcı Bağlandı: ${socket.id} USERID: ${socket.userId}`);
     try {
@@ -47,19 +43,16 @@ const initializeSocketIO = (io: Server) =>{
             
             const conversation = await Conversation.findByIdAndUpdate(conversationId, {
                 lastMessage: newMessage._id
-            });
-            
+            }, {new: true}); // new true burada bize güncellenmiş veriyi getirir
             
             io.to(conversationId).emit("newMessage", populatedMessage);
-            await redis.hset(`conversation:${conversationId}`, {conversation: conversation});
-            await redis.expire(`conversation:${conversationId}`, 60*60*36);
-            // await redis.setex(`conversation:${conversationId}`, 60*60*36, JSON.stringify(conversation));
-            // await redis.get()
-            // await redis.del(`messagesConversationId:${conversationId}`);
-            const previousMessages = await redis.hgetall(`messagesConversationId:${conversationId}`) as any;
+            if (conversation) {
+                await redis.hset(`conversation:${conversationId}`, conversationId.toString(), JSON.stringify(conversation));
+                await redis.expire(`conversation:${conversationId}`, 60*60*24);
 
-            await redis.hset(`messagesConversationId:${conversationId}`, {...previousMessages.messages, populatedMessage});
-            // await redis.
+                await redis.hset(`messagesConversationId:${conversationId}`, populatedMessage._id, JSON.stringify(populatedMessage));
+                await redis.expire(`messagesConversationId:${conversationId}`, 60*60*24);
+            }
         });
     } catch (error) {
         console.log(error);
