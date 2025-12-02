@@ -22,7 +22,9 @@ dotenv.config({quiet: true});
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 app.use(cors({
-    origin: "*"
+    origin: ["http://localhost:8081"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    
 }));
 
 
@@ -30,7 +32,7 @@ app.use("/public", express.static("public"));
 
 
 app.get("/health", (req: Request, res: Response)=>{
-    res.send({systemStatus: true, databaseStatus: mongoose.STATES.connected == 1 ? true : false, redisStatus, rabbitMQStatus: rabbitMQConnectionStatus, });
+    res.send({systemStatus: true, databaseStatus: mongoose.STATES.connected == 1 ? true : false, redisStatus, rabbitMQStatus: rabbitMQConnectionStatus});
 });
 app.get("/", (req, res)=>{res.send("Hello");});
 app.use("/users", userRoutes);
