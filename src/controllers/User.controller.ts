@@ -13,7 +13,8 @@ export const register = async(req: Request, res: Response) =>{
         }      
         const hash = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password, hash);
-        const newUser = new User({email: req.body.email, password: hashedPassword, username: req.body.username});
+        const accessToken = jwt.sign({userEmail: req.body.email}, "accessTokenCode");
+        const newUser = new User({email: req.body.email, password: hashedPassword, username: req.body.username, accessCode: accessToken});
         await newUser.save();
 
 
@@ -41,7 +42,7 @@ export const login = async(req: Request, res: Response) =>{
         user.lastLoginToken = token;
         await user.save();
         
-        return res.send({token, status: true, user: {_id: user._id, name: user.username, email: user.email}});
+        return res.send({token, status: true, user: {_id: user._id, name: user.username, email: user.email, accessCode  : user.accessCode}});
     } catch (error) {
         console.log(error);
         return false;

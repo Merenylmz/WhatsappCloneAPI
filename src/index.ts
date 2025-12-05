@@ -15,7 +15,7 @@ import schedules from './libs/schedules/nodeCronSchedule';
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server);
+export const io = new Server(server);
 
 dotenv.config({quiet: true});
 

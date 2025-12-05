@@ -15,7 +15,8 @@ const userSchema = new mongoose.Schema<UserType>({
     lastLoginToken: {type: String, required: false},
     QRCodeURI: {type: String, required: false},
     QRCodeToken: {type:String, required: false},
-    forgotPasswordToken: {type: String, required: false}
+    forgotPasswordToken: {type: String, required: false},
+    accessCode: {type: String, required: true}
 });
 
 

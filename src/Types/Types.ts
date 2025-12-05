@@ -13,7 +13,8 @@ type UserType = {
     lastLoginToken?: String,
     QRCodeURI?: String,
     QRCodeToken?: String,
-    forgotPasswordToken?: String 
+    forgotPasswordToken?: String,
+    accessCode: String 
 };
 
 type MessageType = {

@@ -10,7 +10,8 @@ const getMessages = async(req: AuthRequest, res: Response) =>{
         const cachedData = await redis.hgetall(`messagesConversationId:${req.query.conversationid}`) as any;
         
         if (!cachedData[0]) {
-            messages = await Message.find({conversation: req.query.conversationid});
+            messages = await Message.find({conversation: req.query.conversationid}).populate("sender");
+            
             // await redis.setex(`messagesConversationId:${req.query.conversationid}`, 1800, JSON.stringify(messages));
             // await redis.hset(`messagesConversationId:${req.query.conversationid}`, {messages: messages});
             for (let i = 0; i < messages.length; i++) {

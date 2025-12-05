@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken';
 import { json, Request, Response } from "express";
 import Conversation from "../models/Conversation.model";
 import { ConversationType } from "../Types/Types";
@@ -72,11 +73,24 @@ const newConversation = async(req: Request, res: Response) =>{
         if (!isGroup) {
             
         }
+
+        let array = [];
+        for (const token of req.body.participants) {
+            const accessTokenCode = jwt.verify(token, "accessTokenCode") as {userEmail: string};
+
+            const user = await User.findOne({email: accessTokenCode.userEmail});
+            if (!user) {
+                return res.send({status: false, msg: "User is not found"});
+            }
+            array.push({user: user._id});
+            
+        }
+
         const newConver = new Conversation({
             isGroup: req.body.isGroup,
             groupName: req.body.groupName,
-            participants: req.body.participants,
-            groupAdmin: req.body.participants[0].user
+            participants: array,
+            groupAdmin: array[0].user
         });
         await newConver.save();
 
@@ -88,7 +102,7 @@ const newConversation = async(req: Request, res: Response) =>{
 
         return res.send({status: true, newConver});
     } catch (error) {
-        console.log("Error");
+        console.log("Error", error);
         return res.send({status: false});
     }
 }
