@@ -38,15 +38,16 @@ const initializeSocketIO = (io: Server) =>{
                     contentType: "Text"
                 });
                 await newMessage.save();
-
-                const populatedMessage = await newMessage.populate('sender', 'username');
-
-                
                 const conversation = await Conversation.findByIdAndUpdate(conversationId, {
                     lastMessage: newMessage._id
                 }, {new: true}); // new true burada bize güncellenmiş veriyi getirir
+
+                const populatedMessage = await newMessage.populate('sender', '_id username');
+                console.log(populatedMessage.toObject());
                 
-                io.to(conversationId).emit("newMessage", {...populatedMessage.toObject(), sender: {username: user.username}});
+                
+                
+                io.to(conversationId).emit("newMessage", {...populatedMessage.toObject()});
                 if (conversation) {
                     await redis.hset(`conversation:${conversationId}`, conversationId.toString(), JSON.stringify(conversation));
                     await redis.expire(`conversation:${conversationId}`, 60*60*24);
@@ -83,6 +84,12 @@ const initializeSocketIO = (io: Server) =>{
                 .to(data.conversationId)
                 .emit("userStopTyping", { userId: socket.userId });
         });
+
+        socket.on("readMessage", async(data)=>{
+            io.to(data.conversationId).emit("userReadMessage", {userId: socket.userId});
+            await Message.updateMany({conversation: data.conversationId, readBy: false }, { $set: { readBy: true } });
+            // await redis.del(`messagesConversationId:${data.conversationId}`);
+        })
 
 
         socket.on("join_qr_room", async(qrId: string)=>{
