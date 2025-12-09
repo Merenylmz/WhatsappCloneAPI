@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { Socket } from "socket.io";
 
 type UserType = {
@@ -14,7 +13,8 @@ type UserType = {
     QRCodeURI?: String,
     QRCodeToken?: String,
     forgotPasswordToken?: String,
-    accessCode: String 
+    accessCode: String,
+    friendRequests?: any
 };
 
 type MessageType = {
@@ -40,4 +40,4 @@ interface AuthenticatedSocket extends Socket {
 }
 
 
-export {UserType, MessageType, ConversationType, AuthenticatedSocket};
+export { AuthenticatedSocket, ConversationType, MessageType, UserType };

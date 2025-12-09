@@ -1,9 +1,10 @@
-import { Request, Response } from "express";
 import bcrypt from "bcrypt";
-import User from "../models/User.model";
+import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import redis from "../libs/redis/redisConf";
 import { sendToQueue } from "../libs/rabbitmq/rabbitMQConf";
+import redis from "../libs/redis/redisConf";
+import { AuthRequest } from "../middleware/tokenControl";
+import User from "../models/User.model";
 
 export const register = async(req: Request, res: Response) =>{
     try {
@@ -93,3 +94,35 @@ export const newPassword = async(req: Request, res: Response) =>{
         return false;
     }
 };
+
+
+export const findUser = async(req: Request, res: Response)=>{
+    try {
+        const user = await User.findOne({username: req.query.username});
+        if (!user) {
+            return res.send({status: false, msg: "User is not found"});
+        }
+        res.send({status: true, user});
+    } catch (error) {
+        console.log(error);
+        return res.send({status: false, msg: "Error"});
+    }
+};
+
+
+export const sendRequestForBeFriend = async(req: AuthRequest, res: Response) =>{
+    try {
+        const user = await User.findOne({username: req.params.friendId});
+        if (!user) {
+            return res.send({status: false, msg: "User is not found"});
+        }
+
+        user.friendRequests.push(req.user._id);
+        await user.save();
+
+        res.send({status: true, msg: "Sended Request"});
+    } catch (error) {
+        console.log(error);
+        return res.send({status: false, msg: "Error"});
+    }
+}

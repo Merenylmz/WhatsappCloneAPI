@@ -1,10 +1,10 @@
+import { Request, Response } from "express";
 import jwt from 'jsonwebtoken';
-import { json, Request, Response } from "express";
-import Conversation from "../models/Conversation.model";
-import { ConversationType } from "../Types/Types";
-import { AuthRequest } from "../middleware/tokenControl";
-import User from "../models/User.model";
 import redis from "../libs/redis/redisConf";
+import { AuthRequest } from "../middleware/tokenControl";
+import Conversation from "../models/Conversation.model";
+import User from "../models/User.model";
+import { ConversationType } from "../Types/Types";
 
 
 const getConversations = async(req: AuthRequest, res: Response) =>{
@@ -68,11 +68,11 @@ const getConversationById = async(req: AuthRequest, res: Response) =>{
 
 const newConversation = async(req: Request, res: Response) =>{
     try {
-        const allParticipantIds = [...new Set([...req.body.participants, req.params.id])];
-        const isGroup = allParticipantIds.length > 2 || !!req.body.groupName; 
-        if (!isGroup) {
+        // const allParticipantIds = [...new Set([...req.body.participants, req.params.id])];
+        // const isGroup = allParticipantIds.length > 2 || !!req.body.groupName; 
+        // if (!isGroup) {
             
-        }
+        // }
 
         let array = [];
         for (const token of req.body.participants) {
@@ -109,4 +109,4 @@ const newConversation = async(req: Request, res: Response) =>{
 
 
 
-export {newConversation, getConversationById, getConversations};
+export { getConversationById, getConversations, newConversation };

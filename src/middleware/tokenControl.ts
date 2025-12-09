@@ -5,7 +5,7 @@ export interface AuthRequest extends Request{
     user?: any
 }
 
-const tokenControlForFunction = async(req: AuthRequest, res: Response, next: NextFunction) =>{
+const normalTokenControl = async(req: AuthRequest, res: Response, next: NextFunction) =>{
     const token = req.query.token as string;
     const {user} = await tokenControlFunction(token);
     req.user = user;
@@ -14,4 +14,4 @@ const tokenControlForFunction = async(req: AuthRequest, res: Response, next: Nex
 
 
 
-export default tokenControlForFunction;
+export default normalTokenControl;
